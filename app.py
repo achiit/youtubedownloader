@@ -1,5 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 from pytube import YouTube
+import os
 
 app = Flask(__name__)
 
@@ -12,9 +13,10 @@ def download_video(url, output_path="."):
         video_stream = yt.streams.get_highest_resolution()
 
         # Download the video
+        video_path = os.path.join(output_path, f"{yt.title}.mp4")
         video_stream.download(output_path)
 
-        return True, "Download complete!"
+        return True, video_path
 
     except Exception as e:
         return False, f"An error occurred: {str(e)}"
@@ -28,12 +30,12 @@ def download_endpoint():
 
     video_url = data['link']
 
-    success, message = download_video(video_url)
+    success, response = download_video(video_url)
 
     if success:
-        return jsonify({"message": message}), 200
+        return send_file(response, as_attachment=True), 200
     else:
-        return jsonify({"error": message}), 500
+        return jsonify({"error": response}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
